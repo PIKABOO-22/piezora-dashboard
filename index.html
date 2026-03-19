@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Piezora Digital Dashboard</title>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #0d1117;
+      --card-bg: #161b22;
+      --text-main: #c9d1d9;
+      --solar-neon: #ffea00;
+      --piezo-neon: #ff007f;
+      --system-neon: #00ffcc;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      text-align: center;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 5px;
+    }
+
+    .status-bar {
+      font-family: monospace;
+      color: #8b949e;
+      margin-bottom: 30px;
+    }
+
+    #conn-status {
+      color: var(--solar-neon);
+      font-weight: bold;
+    }
+
+    /* CSS Grid for a beautiful layout */
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Individual Data Cards */
+    .card {
+      background-color: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    /* Thematic Card Borders */
+    .solar-card { border-top: 4px solid var(--solar-neon); }
+    .piezo-card { border-top: 4px solid var(--piezo-neon); }
+    .system-card { border-top: 4px solid var(--system-neon); }
+
+    .label {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8b949e;
+    }
+
+    .value {
+      font-size: 32px;
+      font-weight: bold;
+      margin-top: 10px;
+      color: #ffffff;
+    }
+
+    .unit {
+      font-size: 16px;
+      color: #8b949e;
+    }
+
+    /* Dynamic Colors for specific states */
+    .step-active { color: var(--piezo-neon) !important; text-shadow: 0 0 10px rgba(255,0,127,0.5); }
+    .load-active { color: var(--system-neon) !important; }
+    .load-cutoff { color: #ff4444 !important; }
+
+  </style>
+</head>
+<body>
+
+  <h1>Piezora</h1>
+  <div class="status-bar">LIVE CLOUD UPLINK: <span id="conn-status">CONNECTING...</span></div>
+
+  <div class="grid-container">
+    
+    <div class="card solar-card">
+      <div class="label">Solar Voltage</div>
+      <div class="value" id="sol-v">-- <span class="unit">V</span></div>
+    </div>
+    <div class="card solar-card">
+      <div class="label">Solar Current</div>
+      <div class="value" id="sol-i">-- <span class="unit">mA</span></div>
+    </div>
+    <div class="card solar-card">
+      <div class="label">Solar Power</div>
+      <div class="value" id="sol-p">-- <span class="unit">mW</span></div>
+    </div>
+
+    <div class="card piezo-card">
+      <div class="label">Piezo Voltage</div>
+      <div class="value" id="pz-v">-- <span class="unit">V</span></div>
+    </div>
+    <div class="card piezo-card">
+      <div class="label">Piezo Power</div>
+      <div class="value" id="pz-p">-- <span class="unit">mW</span></div>
+    </div>
+    <div class="card piezo-card">
+      <div class="label">Footstep Sensor</div>
+      <div class="value" id="pz-s" style="font-size: 24px;">--</div>
+    </div>
+
+    <div class="card system-card">
+      <div class="label">Total Gen Power</div>
+      <div class="value" id="sys-gen">-- <span class="unit">mW</span></div>
+    </div>
+    <div class="card system-card">
+      <div class="label">Virtual Battery</div>
+      <div class="value" id="sys-batt">-- <span class="unit">%</span></div>
+    </div>
+    <div class="card system-card">
+      <div class="label">Load Status</div>
+      <div class="value" id="sys-load" style="font-size: 20px;">--</div>
+    </div>
+
+  </div>
+
+  <script>
+    // 1. YOUR FIREBASE CONFIGURATION
+    const firebaseConfig = {
+      apiKey: "AIzaSyADBEsKitjgJMAtlLlaqi4wjaB01bVB6YI",
+      databaseURL: "https://piezora-cloud-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    // 2. INITIALIZE FIREBASE
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    // 3. TARGET THE MONOZUKURI FOLDER
+    const dbRef = database.ref('/Monozukuri');
+
+    // 4. LISTEN FOR REAL-TIME CHANGES
+    dbRef.on('value', (snapshot) => {
+      const data = snapshot.val();
+      
+      if (data) {
+        // Update Connection Status
+        const statusEl = document.getElementById('conn-status');
+        statusEl.innerText = "CONNECTED";
+        statusEl.style.color = "#00ffcc";
+
+        // Update Solar HTML
+        if(data.Solar) {
+          document.getElementById('sol-v').innerHTML = data.Solar.Voltage.toFixed(2) + ' <span class="unit">V</span>';
+          document.getElementById('sol-i').innerHTML = data.Solar.Current.toFixed(1) + ' <span class="unit">mA</span>';
+          document.getElementById('sol-p').innerHTML = data.Solar.Power.toFixed(1) + ' <span class="unit">mW</span>';
+        }
+
+        // Update Piezo HTML
+        if(data.Piezo) {
+          document.getElementById('pz-v').innerHTML = data.Piezo.Voltage.toFixed(2) + ' <span class="unit">V</span>';
+          document.getElementById('pz-p').innerHTML = data.Piezo.Power.toFixed(1) + ' <span class="unit">mW</span>';
+          
+          const pzStatusEl = document.getElementById('pz-s');
+          pzStatusEl.innerText = data.Piezo.Status;
+          if (data.Piezo.Status === "STEP DETECTED") {
+            pzStatusEl.className = "value step-active";
+          } else {
+            pzStatusEl.className = "value";
+          }
+        }
+
+        // Update System HTML
+        if(data.System) {
+          if(data.System.TotalGenPower !== undefined) {
+             document.getElementById('sys-gen').innerHTML = data.System.TotalGenPower.toFixed(1) + ' <span class="unit">mW</span>';
+          }
+          document.getElementById('sys-batt').innerHTML = data.System.Battery.toFixed(1) + ' <span class="unit">%</span>';
+          
+          const loadEl = document.getElementById('sys-load');
+          loadEl.innerText = data.System.LoadStatus;
+          if (data.System.LoadStatus.includes("ON")) {
+            loadEl.className = "value load-active";
+          } else {
+            loadEl.className = "value load-cutoff";
+          }
+        }
+      }
+    }, (error) => {
+      console.error("Firebase read failed: " + error.code);
+      document.getElementById('conn-status').innerText = "ERROR: " + error.code;
+      document.getElementById('conn-status').style.color = "#ff4444";
+    });
+  </script>
+</body>
+</html>
