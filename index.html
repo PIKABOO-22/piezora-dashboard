@@ -41,11 +41,30 @@
     }
 
     #conn-status {
-      color: var(--solar-neon);
+      color: var(--system-neon);
       font-weight: bold;
     }
 
-    /* CSS Grid for a beautiful layout */
+    /* Section Headers */
+    .section-title {
+      font-size: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 40px;
+      margin-bottom: 15px;
+      text-align: left;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      border-bottom: 1px solid #30363d;
+      padding-bottom: 5px;
+    }
+
+    .solar-title { color: var(--solar-neon); }
+    .piezo-title { color: var(--piezo-neon); }
+    .system-title { color: var(--system-neon); }
+
+    /* CSS Grid */
     .grid-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -100,50 +119,67 @@
 </head>
 <body>
 
-  <h1>Piezora</h1>
+  <h1>Piezora Control Center</h1>
   <div class="status-bar">LIVE CLOUD UPLINK: <span id="conn-status">CONNECTING...</span></div>
 
+  <div class="section-title solar-title">☀️ Solar Harvester</div>
   <div class="grid-container">
-    
     <div class="card solar-card">
-      <div class="label">Solar Voltage</div>
+      <div class="label">⚡ Solar Voltage</div>
       <div class="value" id="sol-v">-- <span class="unit">V</span></div>
     </div>
     <div class="card solar-card">
-      <div class="label">Solar Current</div>
+      <div class="label">🌊 Solar Current</div>
       <div class="value" id="sol-i">-- <span class="unit">mA</span></div>
     </div>
     <div class="card solar-card">
-      <div class="label">Solar Power</div>
+      <div class="label">🚀 Solar Power</div>
       <div class="value" id="sol-p">-- <span class="unit">mW</span></div>
     </div>
+  </div>
 
+  <div class="section-title piezo-title">👟 Piezoelectric Array</div>
+  <div class="grid-container">
     <div class="card piezo-card">
-      <div class="label">Piezo Voltage</div>
+      <div class="label">⚡ Piezo Voltage</div>
       <div class="value" id="pz-v">-- <span class="unit">V</span></div>
     </div>
     <div class="card piezo-card">
-      <div class="label">Piezo Power</div>
+      <div class="label">🌊 Piezo Current</div>
+      <div class="value" id="pz-i">-- <span class="unit">mA</span></div>
+    </div>
+    <div class="card piezo-card">
+      <div class="label">🚀 Piezo Power</div>
       <div class="value" id="pz-p">-- <span class="unit">mW</span></div>
     </div>
     <div class="card piezo-card">
-      <div class="label">Footstep Sensor</div>
-      <div class="value" id="pz-s" style="font-size: 24px;">--</div>
+      <div class="label">🎯 Sensor Status</div>
+      <div class="value" id="pz-s" style="font-size: 22px;">--</div>
     </div>
+  </div>
 
+  <div class="section-title system-title">🔋 Storage & Distribution</div>
+  <div class="grid-container">
     <div class="card system-card">
-      <div class="label">Total Gen Power</div>
-      <div class="value" id="sys-gen">-- <span class="unit">mW</span></div>
+      <div class="label">⚡ Battery Voltage</div>
+      <div class="value" id="batt-v">-- <span class="unit">V</span></div>
     </div>
     <div class="card system-card">
-      <div class="label">Virtual Battery</div>
+      <div class="label">🔋 Battery Level</div>
       <div class="value" id="sys-batt">-- <span class="unit">%</span></div>
     </div>
     <div class="card system-card">
-      <div class="label">Load Status</div>
+      <div class="label">🔌 Load Power</div>
+      <div class="value" id="sys-load-p">-- <span class="unit">mW</span></div>
+    </div>
+    <div class="card system-card">
+      <div class="label">💡 Load Status</div>
       <div class="value" id="sys-load" style="font-size: 20px;">--</div>
     </div>
-
+    <div class="card system-card" style="grid-column: 1 / -1; max-width: 400px; margin: 0 auto; width: 100%;">
+      <div class="label">🌐 Total Gen Power</div>
+      <div class="value" id="sys-gen">-- <span class="unit">mW</span></div>
+    </div>
   </div>
 
   <script>
@@ -168,18 +204,18 @@
         // Update Connection Status
         const statusEl = document.getElementById('conn-status');
         statusEl.innerText = "CONNECTED";
-        statusEl.style.color = "#00ffcc";
 
-        // Update Solar HTML
+        // --- UPDATE SOLAR ---
         if(data.Solar) {
           document.getElementById('sol-v').innerHTML = data.Solar.Voltage.toFixed(2) + ' <span class="unit">V</span>';
           document.getElementById('sol-i').innerHTML = data.Solar.Current.toFixed(1) + ' <span class="unit">mA</span>';
           document.getElementById('sol-p').innerHTML = data.Solar.Power.toFixed(1) + ' <span class="unit">mW</span>';
         }
 
-        // Update Piezo HTML
+        // --- UPDATE PIEZO ---
         if(data.Piezo) {
           document.getElementById('pz-v').innerHTML = data.Piezo.Voltage.toFixed(2) + ' <span class="unit">V</span>';
+          document.getElementById('pz-i').innerHTML = data.Piezo.Current.toFixed(2) + ' <span class="unit">mA</span>';
           document.getElementById('pz-p').innerHTML = data.Piezo.Power.toFixed(1) + ' <span class="unit">mW</span>';
           
           const pzStatusEl = document.getElementById('pz-s');
@@ -191,19 +227,29 @@
           }
         }
 
-        // Update System HTML
+        // --- UPDATE SYSTEM ---
         if(data.System) {
           if(data.System.TotalGenPower !== undefined) {
              document.getElementById('sys-gen').innerHTML = data.System.TotalGenPower.toFixed(1) + ' <span class="unit">mW</span>';
           }
-          document.getElementById('sys-batt').innerHTML = data.System.Battery.toFixed(1) + ' <span class="unit">%</span>';
+          if(data.System.LoadPower !== undefined) {
+             document.getElementById('sys-load-p').innerHTML = data.System.LoadPower.toFixed(1) + ' <span class="unit">mW</span>';
+          }
+          if(data.System.BatteryVoltage !== undefined) {
+             document.getElementById('batt-v').innerHTML = data.System.BatteryVoltage.toFixed(2) + ' <span class="unit">V</span>';
+          }
+          if(data.System.Battery !== undefined) {
+             document.getElementById('sys-batt').innerHTML = data.System.Battery.toFixed(1) + ' <span class="unit">%</span>';
+          }
           
           const loadEl = document.getElementById('sys-load');
-          loadEl.innerText = data.System.LoadStatus;
-          if (data.System.LoadStatus.includes("ON")) {
-            loadEl.className = "value load-active";
-          } else {
-            loadEl.className = "value load-cutoff";
+          if(data.System.LoadStatus) {
+            loadEl.innerText = data.System.LoadStatus;
+            if (data.System.LoadStatus.includes("ON")) {
+              loadEl.className = "value load-active";
+            } else {
+              loadEl.className = "value load-cutoff";
+            }
           }
         }
       }
