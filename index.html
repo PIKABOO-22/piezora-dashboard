@@ -16,6 +16,7 @@
       --solar-neon: #ffea00;
       --piezo-neon: #ff007f;
       --system-neon: #00ffcc;
+      --diag-neon: #b392f0; /* New color for the diagnostics row */
     }
 
     body {
@@ -47,10 +48,10 @@
 
     /* Section Headers */
     .section-title {
-      font-size: 20px;
+      font-size: 18px;
       text-transform: uppercase;
       letter-spacing: 2px;
-      margin-top: 40px;
+      margin-top: 30px;
       margin-bottom: 15px;
       text-align: left;
       max-width: 900px;
@@ -63,14 +64,22 @@
     .solar-title { color: var(--solar-neon); }
     .piezo-title { color: var(--piezo-neon); }
     .system-title { color: var(--system-neon); }
+    .diag-title { color: var(--diag-neon); }
 
-    /* CSS Grid */
+    /* CSS Grid - STRICT 3 COLUMNS */
     .grid-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(3, 1fr); /* Forces exactly 3 equal columns */
       gap: 20px;
       max-width: 900px;
-      margin: 0 auto;
+      margin: 0 auto 20px auto;
+    }
+
+    /* Stack to 1 column on mobile screens */
+    @media (max-width: 768px) {
+      .grid-container {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* Individual Data Cards */
@@ -80,6 +89,9 @@
       border-radius: 12px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
       transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .card:hover {
@@ -90,9 +102,10 @@
     .solar-card { border-top: 4px solid var(--solar-neon); }
     .piezo-card { border-top: 4px solid var(--piezo-neon); }
     .system-card { border-top: 4px solid var(--system-neon); }
+    .diag-card { border-top: 4px solid var(--diag-neon); }
 
     .label {
-      font-size: 14px;
+      font-size: 13px;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: #8b949e;
@@ -152,13 +165,9 @@
       <div class="label">🚀 Piezo Power</div>
       <div class="value" id="pz-p">-- <span class="unit">mW</span></div>
     </div>
-    <div class="card piezo-card">
-      <div class="label">🎯 Sensor Status</div>
-      <div class="value" id="pz-s" style="font-size: 22px;">--</div>
-    </div>
   </div>
 
-  <div class="section-title system-title">🔋 Storage & Distribution</div>
+  <div class="section-title system-title">🔋 Battery Storage</div>
   <div class="grid-container">
     <div class="card system-card">
       <div class="label">⚡ Battery Voltage</div>
@@ -169,16 +178,24 @@
       <div class="value" id="sys-batt">-- <span class="unit">%</span></div>
     </div>
     <div class="card system-card">
-      <div class="label">🔌 Load Power</div>
-      <div class="value" id="sys-load-p">-- <span class="unit">mW</span></div>
+      <div class="label">🌐 Total Gen Power</div>
+      <div class="value" id="sys-gen">-- <span class="unit">mW</span></div>
+    </div>
+  </div>
+
+  <div class="section-title diag-title">⚙️ Output & Diagnostics</div>
+  <div class="grid-container">
+    <div class="card piezo-card">
+      <div class="label">🎯 Sensor Status</div>
+      <div class="value" id="pz-s" style="font-size: 22px;">--</div>
     </div>
     <div class="card system-card">
       <div class="label">💡 Load Status</div>
       <div class="value" id="sys-load" style="font-size: 20px;">--</div>
     </div>
-    <div class="card system-card" style="grid-column: 1 / -1; max-width: 400px; margin: 0 auto; width: 100%;">
-      <div class="label">🌐 Total Gen Power</div>
-      <div class="value" id="sys-gen">-- <span class="unit">mW</span></div>
+    <div class="card system-card">
+      <div class="label">🔌 Load Power</div>
+      <div class="value" id="sys-load-p">-- <span class="unit">mW</span></div>
     </div>
   </div>
 
@@ -227,7 +244,7 @@
           }
         }
 
-        // --- UPDATE SYSTEM ---
+        // --- UPDATE SYSTEM & BATTERY ---
         if(data.System) {
           if(data.System.TotalGenPower !== undefined) {
              document.getElementById('sys-gen').innerHTML = data.System.TotalGenPower.toFixed(1) + ' <span class="unit">mW</span>';
