@@ -16,7 +16,7 @@
       --solar-neon: #ffea00;
       --piezo-neon: #ff007f;
       --system-neon: #00ffcc;
-      --diag-neon: #b392f0; /* New color for the diagnostics row */
+      --diag-neon: #b392f0; 
     }
 
     body {
@@ -69,13 +69,12 @@
     /* CSS Grid - STRICT 3 COLUMNS */
     .grid-container {
       display: grid;
-      grid-template-columns: repeat(3, 1fr); /* Forces exactly 3 equal columns */
+      grid-template-columns: repeat(3, 1fr); 
       gap: 20px;
       max-width: 900px;
       margin: 0 auto 20px auto;
     }
 
-    /* Stack to 1 column on mobile screens */
     @media (max-width: 768px) {
       .grid-container {
         grid-template-columns: 1fr;
@@ -102,7 +101,7 @@
     .solar-card { border-top: 4px solid var(--solar-neon); }
     .piezo-card { border-top: 4px solid var(--piezo-neon); }
     .system-card { border-top: 4px solid var(--system-neon); }
-    .diag-card { border-top: 4px solid var(--diag-neon); }
+    .diag-card { border-top: 4px solid var(--diag-neon); } /* Now applied correctly */
 
     .label {
       font-size: 13px;
@@ -185,40 +184,35 @@
 
   <div class="section-title diag-title">⚙️ Output & Diagnostics</div>
   <div class="grid-container">
-    <div class="card piezo-card">
+    <div class="card diag-card">
       <div class="label">🎯 Sensor Status</div>
       <div class="value" id="pz-s" style="font-size: 22px;">--</div>
     </div>
-    <div class="card system-card">
+    <div class="card diag-card">
       <div class="label">💡 Load Status</div>
       <div class="value" id="sys-load" style="font-size: 20px;">--</div>
     </div>
-    <div class="card system-card">
+    <div class="card diag-card">
       <div class="label">🔌 Load Power</div>
       <div class="value" id="sys-load-p">-- <span class="unit">mW</span></div>
     </div>
   </div>
 
   <script>
-    // 1. YOUR FIREBASE CONFIGURATION
     const firebaseConfig = {
       apiKey: "AIzaSyADBEsKitjgJMAtlLlaqi4wjaB01bVB6YI",
       databaseURL: "https://piezora-cloud-default-rtdb.asia-southeast1.firebasedatabase.app"
     };
 
-    // 2. INITIALIZE FIREBASE
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     
-    // 3. TARGET THE MONOZUKURI FOLDER
     const dbRef = database.ref('/Monozukuri');
 
-    // 4. LISTEN FOR REAL-TIME CHANGES
     dbRef.on('value', (snapshot) => {
       const data = snapshot.val();
       
       if (data) {
-        // Update Connection Status
         const statusEl = document.getElementById('conn-status');
         statusEl.innerText = "CONNECTED";
 
